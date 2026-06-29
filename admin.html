@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Main WallPrint Admin | Posts & Anfragen</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="icon" type="image/png" href="assets/img/main-wallprint-logo.png" />
+  <link rel="stylesheet" href="assets/css/admin.css" />
+</head>
+<body class="admin-body vibe-container">
+  <input class="vibe-radio" type="radio" name="vibe" id="vibe-cyber" aria-hidden="true" />
+  <input class="vibe-radio" type="radio" name="vibe" id="vibe-ethereal" checked aria-hidden="true" />
+  <input class="vibe-radio" type="radio" name="vibe" id="vibe-inferno" aria-hidden="true" />
+  <div class="fluid-mesh" aria-hidden="true">
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+    <span class="orb orb-3"></span>
+  </div>
+  <div class="site-bg" aria-hidden="true"></div>
+  <header class="header admin-header">
+    <a class="logo logo-image-link" href="index.html" aria-label="Main WallPrint Home">
+      <img class="brand-logo-img" src="assets/img/main-wallprint-logo.png" alt="Main WallPrint Logo">
+    </a>
+    <nav class="nav admin-nav">
+      <a href="index.html">Website</a>
+      <a href="#postsAdmin">Posts</a>
+      <a href="#inquiriesAdmin">Anfragen</a>
+      <a href="#trackingAdmin">Tracking</a>
+      <button id="logoutBtn" class="nav-button" type="button">Logout</button>
+    </nav>
+  </header>
+
+  <main class="container admin-main">
+    <section class="login-card" id="loginCard">
+      <p class="eyebrow">Private Dashboard</p>
+      <h1>Posts und Anfragen verwalten.</h1>
+      <p class="muted">Diese Seite ist als einfache externe Admin-Oberfläche gedacht. Standard-Passwort steht im README und kann in admin.js geändert werden.</p>
+      <form id="loginForm" class="login-form">
+        <label>Passwort<input id="passwordInput" type="password" autocomplete="current-password" placeholder="Passwort eingeben" /></label>
+        <button class="btn primary full" type="submit">Dashboard öffnen</button>
+      </form>
+      <p class="form-note">Demo-Passwort: <strong>wallprint2026</strong></p>
+    </section>
+
+    <section class="dashboard hidden" id="dashboard">
+      <div class="dashboard-head">
+        <div>
+          <p class="eyebrow">Dashboard</p>
+          <h1>Main WallPrint CMS</h1>
+          <p class="muted">Alle Daten werden in localStorage gespeichert. Für Produktion kann später Firebase, Supabase, WordPress REST API oder ein eigenes Backend angeschlossen werden.</p>
+        </div>
+        <div class="admin-actions">
+          <a class="btn ghost" href="index.html#ideas">Posts ansehen</a>
+          <button class="btn primary" id="exportAllBtn" type="button">Alles exportieren</button>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <article><span id="postCount">0</span><strong>Posts</strong></article>
+        <article><span id="publishedCount">0</span><strong>Veröffentlicht</strong></article>
+        <article><span id="draftCount">0</span><strong>Entwürfe</strong></article>
+        <article><span id="inquiryCount">0</span><strong>Anfragen</strong></article>
+        <article><span id="activeOrderCount">0</span><strong>Aktive Aufträge</strong></article>
+        <article><span id="completedOrderCount">0</span><strong>Abgeschlossen</strong></article>
+      </div>
+
+      <section class="admin-section" id="postsAdmin">
+        <div class="section-head split">
+          <div>
+            <p class="eyebrow">External Post Management</p>
+            <h2>Neue Posts hinzufügen.</h2>
+          </div>
+          <div class="mini-action-row">
+            <button class="mini-btn" id="seedPostsBtn" type="button">Demo-Posts speichern</button>
+            <button class="mini-btn muted" id="exportPostsBtn" type="button">Posts exportieren</button>
+            <label class="import-btn">Posts importieren<input id="importPostsInput" type="file" accept="application/json"></label>
+          </div>
+        </div>
+
+        <div class="admin-grid">
+          <form class="panel post-editor" id="postForm">
+            <input type="hidden" id="postId" />
+            <label>Titel<input id="postTitle" type="text" required placeholder="Titel des Posts"></label>
+            <div class="field-row">
+              <label>Kategorie<input id="postCategory" type="text" value="Projektidee"></label>
+              <label>Datum<input id="postDate" type="date"></label>
+            </div>
+            <label>Status
+              <select id="postStatus">
+                <option value="published">Veröffentlicht</option>
+                <option value="draft">Entwurf</option>
+              </select>
+            </label>
+            <label>Kurzbeschreibung<textarea id="postExcerpt" rows="3" placeholder="Kurzer Text für die Karte"></textarea></label>
+            <label>Details<textarea id="postBody" rows="6" placeholder="Längerer Text oder Projektdetails"></textarea></label>
+            <label>Bild hochladen<input id="postImage" type="file" accept="image/*"></label>
+            <div class="image-preview" id="postImagePreview">Kein Bild</div>
+            <div class="form-actions">
+              <button class="btn primary" type="submit">Post speichern</button>
+              <button class="btn ghost" type="button" id="resetPostForm">Formular leeren</button>
+            </div>
+          </form>
+
+          <div class="post-admin-list" id="postAdminList"></div>
+        </div>
+      </section>
+
+
+      <section class="admin-section" id="trackingAdmin">
+        <div class="section-head split">
+          <div>
+            <p class="eyebrow">Order Tracking</p>
+            <h2>Auftragsstatus steuern.</h2>
+          </div>
+          <p class="muted">Hier kannst du pro Anfrage den Status ändern, eine Team-Notiz speichern und dem Kunden die Tracking-ID geben.</p>
+        </div>
+        <div class="tracking-admin-layout">
+          <div class="panel">
+            <div class="field-row">
+              <label>Status filtern
+                <select id="orderStatusFilter">
+                  <option value="all">Alle Status</option>
+                  <option value="new">Neu</option>
+                  <option value="review">In Prüfung</option>
+                  <option value="design">Design / Vorbereitung</option>
+                  <option value="awaiting_approval">Warten auf Freigabe</option>
+                  <option value="scheduled">Termin geplant</option>
+                  <option value="printing">In Produktion</option>
+                  <option value="completed">Abgeschlossen</option>
+                  <option value="cancelled">Storniert</option>
+                </select>
+              </label>
+              <label>Suche
+                <input id="orderSearch" type="search" placeholder="Name, E-Mail, Tracking-ID">
+              </label>
+            </div>
+            <div id="orderList" class="order-list"></div>
+          </div>
+
+          <div class="panel order-editor" id="orderEditor">
+            <p class="eyebrow">Ausgewählter Auftrag</p>
+            <h3>Noch kein Auftrag gewählt</h3>
+            <p class="muted">Wähle links eine Anfrage aus, um Status und Notizen zu bearbeiten.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="admin-section" id="inquiriesAdmin">
+        <div class="section-head split">
+          <div>
+            <p class="eyebrow">Uploads & Anfragen</p>
+            <h2>Kontaktformular und Konfigurator.</h2>
+          </div>
+          <div class="mini-action-row">
+            <button class="mini-btn" id="exportInquiriesBtn" type="button">Anfragen exportieren</button>
+            <button class="mini-btn muted danger" id="clearInquiriesBtn" type="button">Anfragen löschen</button>
+          </div>
+        </div>
+        <div class="inquiry-list" id="inquiryList"></div>
+      </section>
+    </section>
+  </main>
+
+  <div class="vibe-picker" aria-label="Design-Farbstimmung">
+    <label class="node" for="vibe-cyber" data-label="Cyber"></label>
+    <label class="node" for="vibe-ethereal" data-label="Green"></label>
+    <label class="node" for="vibe-inferno" data-label="Warm"></label>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>
