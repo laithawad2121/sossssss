@@ -222,110 +222,6 @@
   }
 
 
-  const fallbackPostImages = [
-    'https://images.unsplash.com/photo-1600566752355-35792bedcfea?auto=format&fit=crop&w=1200&q=84',
-    'https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=1200&q=84',
-    'https://images.unsplash.com/photo-1615873968403-89e068629265?auto=format&fit=crop&w=1200&q=84'
-  ];
-
-  function detailParagraphs(text){
-    const value = String(text || '').trim();
-    if(!value) return '<p>Weitere Details folgen bald.</p>';
-    return value.split(/\n{2,}|\r?\n/).filter(Boolean).map(part => `<p>${escapeHTML(part)}</p>`).join('');
-  }
-
-  function openDetailModal(detail={}){
-    const modal = $('#detailModal');
-    if(!modal) return;
-    const panel = $('.detail-modal-panel', modal);
-    const category = $('#detailModalCategory');
-    const title = $('#detailModalTitle');
-    const subtitle = $('#detailModalSubtitle');
-    const body = $('#detailModalBody');
-    const media = $('#detailModalMedia');
-    const action = $('#detailModalAction');
-
-    if(category) category.textContent = detail.category || 'Details';
-    if(title) title.textContent = detail.title || 'Main WallPrint';
-    if(subtitle) subtitle.textContent = detail.subtitle || detail.excerpt || '';
-    if(body) body.innerHTML = detailParagraphs(detail.body || detail.excerpt || '');
-    if(media){
-      if(detail.image){
-        media.innerHTML = `<img src="${escapeHTML(detail.image)}" alt="${escapeHTML(detail.title || 'Main WallPrint Details')}">`;
-      } else {
-        media.innerHTML = '<span>MWP</span>';
-      }
-    }
-    if(action){
-      action.textContent = detail.actionText || 'Projekt anfragen';
-      action.setAttribute('href', detail.actionHref || '#contact');
-    }
-
-    modal.classList.add('is-open');
-    modal.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('modal-open');
-    setTimeout(() => panel?.focus({preventScroll:true}), 20);
-  }
-
-  function closeDetailModal(){
-    const modal = $('#detailModal');
-    if(!modal) return;
-    modal.classList.remove('is-open');
-    modal.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('modal-open');
-  }
-
-  function detailFromCard(card){
-    return {
-      category: card.dataset.detailCategory || 'Details',
-      title: card.dataset.detailTitle || $('.mosaic-card h3', card)?.textContent || 'Main WallPrint',
-      subtitle: card.dataset.detailSubtitle || $('p', card)?.textContent || '',
-      body: card.dataset.detailBody || $('p', card)?.textContent || '',
-      image: card.dataset.detailImage || '',
-      actionText: card.dataset.detailActionText || 'Projekt anfragen',
-      actionHref: card.dataset.detailActionHref || '#contact'
-    };
-  }
-
-  function detailFromPost(post, index=0){
-    return {
-      category: post.category || 'Post',
-      title: post.title || 'Main WallPrint Post',
-      subtitle: post.excerpt || '',
-      body: post.body || post.excerpt || '',
-      image: post.image || fallbackPostImages[index % fallbackPostImages.length],
-      actionText: 'Anfrage starten',
-      actionHref: '#contact'
-    };
-  }
-
-  function initDetailModal(){
-    const modal = $('#detailModal');
-    if(!modal) return;
-    $$('[data-detail-close]', modal).forEach(btn => btn.addEventListener('click', closeDetailModal));
-    $('#detailModalAction')?.addEventListener('click', () => closeDetailModal());
-    document.addEventListener('keydown', event => {
-      if(event.key === 'Escape' && modal.classList.contains('is-open')) closeDetailModal();
-    });
-    $$('[data-detail-card]').forEach(card => {
-      card.setAttribute('tabindex', '0');
-      card.setAttribute('role', 'button');
-      card.setAttribute('aria-label', `${card.dataset.detailTitle || 'Details'} anzeigen`);
-      const open = (event) => {
-        event.preventDefault();
-        openDetailModal(detailFromCard(card));
-      };
-      card.addEventListener('click', open);
-      card.addEventListener('keydown', event => {
-        if(event.key === 'Enter' || event.key === ' '){
-          event.preventDefault();
-          openDetailModal(detailFromCard(card));
-        }
-      });
-    });
-  }
-
-
   function initHeaderScroll(){
     const update = () => {
       const progress = Math.min(Math.max(window.scrollY / 500, 0), 1);
@@ -635,29 +531,19 @@
     const grid = $('#postGrid');
     if(!grid) return;
     const posts = getPosts().filter(p => p.status === 'published').sort((a,b) => String(b.date).localeCompare(String(a.date))).slice(0,9);
-    grid.innerHTML = posts.map((post, index) => `
-      <article class="post-card" tabindex="0" role="button" aria-label="${escapeHTML(post.title || 'Post')} Details anzeigen">
-        <div class="post-image">${post.image ? `<img src="${escapeHTML(post.image)}" alt="${escapeHTML(post.title)}">` : 'MWP'}</div>
+    grid.innerHTML = posts.map(post => {
+      const href = `project.html?post=${encodeURIComponent(post.id || post.title || '')}`;
+      return `
+      <article class="post-card project-preview-card">
+        <a class="post-image post-link" href="${href}" aria-label="${escapeHTML(post.title)} Details öffnen">${post.image ? `<img src="${post.image}" alt="${escapeHTML(post.title)}">` : 'MWP'}</a>
         <div class="post-body">
-          <div class="post-meta">${escapeHTML(post.category || 'Post')} · ${escapeHTML(post.date || '')}</div>
-          <h3>${escapeHTML(post.title)}</h3>
+          <a class="post-meta" href="${href}">${escapeHTML(post.category || 'Post')} · ${escapeHTML(post.date || '')}</a>
+          <h3><a class="project-title-link" href="${href}">${escapeHTML(post.title)}</a></h3>
           <p>${escapeHTML(post.excerpt || post.body || '')}</p>
-          <button class="mini-btn muted post-more" type="button">Details ansehen</button>
+          <a class="read-more" href="${href}">Mehr</a>
         </div>
-      </article>`).join('');
-    $$('.post-card', grid).forEach((card, index) => {
-      const open = (event) => {
-        event.preventDefault();
-        openDetailModal(detailFromPost(posts[index], index));
-      };
-      card.addEventListener('click', open);
-      card.addEventListener('keydown', event => {
-        if(event.key === 'Enter' || event.key === ' '){
-          event.preventDefault();
-          openDetailModal(detailFromPost(posts[index], index));
-        }
-      });
-    });
+      </article>`;
+    }).join('');
   }
 
   function setContactStatus(message, isError=false){
@@ -851,8 +737,8 @@
   function initYear(){ const y=$('#year'); if(y) y.textContent = new Date().getFullYear(); }
 
   document.addEventListener('DOMContentLoaded', () => {
-    initYear(); initHeaderScroll(); initNav(); initReveal(); initDetailModal(); initHeroPrint(); initCalculator(); initSimulator(); initConfigurator(); initPosts(); initTeamPage(); initTracking(); initContact();
+    initYear(); initHeaderScroll(); initNav(); initReveal(); initHeroPrint(); initCalculator(); initSimulator(); initConfigurator(); initPosts(); initTeamPage(); initTracking(); initContact();
   });
 
-  window.MWP = {getPosts, getInquiries, saveInquiries, escapeHTML, readFile, downloadJSON, toast, openDetailModal, closeDetailModal, STORAGE_POSTS, STORAGE_INQUIRIES, defaultPosts, trackingId, statusLabel, statusProgress, normalizeInquiry, ORDER_STATUSES};
+  window.MWP = {getPosts, getInquiries, saveInquiries, escapeHTML, readFile, downloadJSON, toast, STORAGE_POSTS, STORAGE_INQUIRIES, defaultPosts, trackingId, statusLabel, statusProgress, normalizeInquiry, ORDER_STATUSES};
 })();
